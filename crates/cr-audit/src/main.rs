@@ -214,7 +214,7 @@ async fn serve() -> Result<(), String> {
             }
         })
         .on::<Chain, _, _>(move |_: (), _| { let c = c1.clone(); async move { Ok(chain(c).await) } })
-        .on::<Sources, _, _>(move |_: (), _| { let st = s2.clone(); async move { Ok(sources(&*st.read().await)) } })
+        .on::<Sources, _, _>(move |_: (), who| { let st = s2.clone(); async move { Ok(sources_for(&who, sources(&*st.read().await))) } })
         .stream::<Watch, _, _>(move |q: AuditQuery, who, sink| {
             let (st, mut rx) = (s3.clone(), rx.clone());
             async move {

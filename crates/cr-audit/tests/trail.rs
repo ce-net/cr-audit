@@ -19,10 +19,10 @@ const ALL: AuditQuery = AuditQuery { q: None, app: None, only_failed: None };
 
 #[test]
 fn two_viewers_two_trails() {
-    let k = from_keys("foreman-ops-1", 0, &cr_sources::keys::AuditRow { t: 5, caller: "lane".into(), op: "Get".into(), name: "STRIPE_KEY".into(), ok: true, note: "n".into() });
-    let p = keep(vec![row("foreman-ops-1", 1, 1000, "orch", "Up"), row("leif-desk", 7, 9000, "access.grant", "Mint"), k]);
+    let k = from_keys("ops-1", 0, &cr_sources::keys::AuditRow { t: 5, caller: "lane".into(), op: "Get".into(), name: "STRIPE_KEY".into(), ok: true, note: "n".into() });
+    let p = keep(vec![row("ops-1", 1, 1000, "orch", "Up"), row("leif-desk", 7, 9000, "access.grant", "Mint"), k]);
     let root = for_caller(&caller(&["cr.audit:read", "cr.audit:detail"]), &ALL, &p);
-    assert_eq!(root.iter().map(|r| r.id.as_str()).collect::<Vec<_>>(), ["leif-desk:7", "keys:foreman-ops-1:5:0", "foreman-ops-1:1"]);
+    assert_eq!(root.iter().map(|r| r.id.as_str()).collect::<Vec<_>>(), ["leif-desk:7", "keys:ops-1:5:0", "ops-1:1"]);
     assert!(root.iter().all(|r| r.detail.is_some()));
     assert_eq!(root[2].chain_id.as_deref(), Some("0011223344556677"));
     let op = for_caller(&caller(&["cr.audit:read", "cr.audit:where:app=orch"]), &ALL, &p);
