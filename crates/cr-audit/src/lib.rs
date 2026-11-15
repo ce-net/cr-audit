@@ -15,6 +15,10 @@ use ui_part::Parts;
 pub const CELL: &str = "cr.audit";
 pub const AUDIT_ABILITIES: &[&str] = &["audit:read"];
 pub const KEYS_ABILITIES: &[&str] = &["keys:audit"];
+/// The one grant this cell's own key holds, minted by the node for exactly what it reads (`ce-iam grant --to <cell key>
+/// --action <each>`, kept with the key in `<ce data dir>/cell-keys/cr.audit/`); every source token is attenuated from it
+/// ([`ui_chain::source_token`]). A taken backend holds this, never the node's root.
+pub const GRANT: &[&str] = &["audit:read", "keys:audit", "ui.trace:write", "delegate:1"];
 pub const MAX: u32 = 500;
 pub const KEEP: usize = 1200;
 pub const EVERY_S: u64 = 10;

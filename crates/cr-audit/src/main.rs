@@ -199,7 +199,8 @@ async fn chain(chains: Chains) -> Vec<ChainState> {
 }
 
 async fn serve() -> Result<(), String> {
-    let me = ce_gate::node_identity().map_err(|e| e.to_string())?;
+    // this cell's own key and narrow grant (never the node's key); the gate roots callers' chains at the grant's root
+    let me = ui_chain::init(CELL)?.root();
     let started = Instant::now();
     let st: Shared = Arc::default();
     let chains: Chains = Arc::new(Mutex::new((None, vec![])));
@@ -215,7 +216,7 @@ async fn serve() -> Result<(), String> {
     }
     let (s1, s2, s3, s4) = (st.clone(), st.clone(), st.clone(), st.clone());
     let (c1, c2) = (chains.clone(), chains.clone());
-    let gate = ce_gate::Gate::<CrAudit>::new(me.node_id(), ce_gate::mesh_roots()).into_fn();
+    let gate = ce_gate::Gate::<CrAudit>::new(me, ce_gate::mesh_roots()).into_fn();
     let v2 = Server::<CrAudit>::new(gate)
         .on::<HealthOp, _, _>(move |_: (), _| async move { Ok(Health { ok: true, version: env!("CARGO_PKG_VERSION").into(), uptime_s: started.elapsed().as_secs() }) })
         .on::<Search, _, _>(move |q: AuditQuery, who| {
@@ -265,7 +266,7 @@ async fn serve() -> Result<(), String> {
         SourceState::Down { why } => old::SourceState::Down { why },
         SourceState::Refused { needs } => old::SourceState::Refused { needs },
     };
-    let gate1 = ce_gate::Gate::<old::CrAudit>::new(me.node_id(), ce_gate::mesh_roots()).into_fn();
+    let gate1 = ce_gate::Gate::<old::CrAudit>::new(me, ce_gate::mesh_roots()).into_fn();
     let v1s = Server::<old::CrAudit>::new(gate1)
         .on::<old::HealthOp, _, _>(move |_: (), _| async move { Ok(old::Health { ok: true, version: env!("CARGO_PKG_VERSION").into(), uptime_s: started.elapsed().as_secs() }) })
         .on::<old::Search, _, _>(move |ask: old::AuditAsk, who| {
