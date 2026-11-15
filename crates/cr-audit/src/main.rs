@@ -101,9 +101,15 @@ async fn round(st: &Shared, tx: &watch::Sender<u64>) {
     let start = ui_chain::now_ms();
     let t = Trace::root(&ui_chain::hostname());
     let mut hs = Vec::new();
+    // the newest rows of every app, and the newest of each app a narrow viewer is usually caveated to (a busy app
+    // would otherwise push them out of the newest 200)
+    let apps: Vec<String> = std::env::var("CR_AUDIT_APPS").unwrap_or_else(|_| "orch,cell.install,access.grant,grant.bundle,root.approve".into())
+        .split(',').map(str::trim).filter(|a| !a.is_empty()).map(String::from).collect();
     for n in mesh_nodes() {
-        let req = QueryReq { app: "*".into(), target_prefix: None, before: None, limit: 200 };
-        hs.push(tokio::spawn(query(n.clone(), req, t.clone())));
+        hs.push(tokio::spawn(query(n.clone(), QueryReq { app: "*".into(), target_prefix: None, before: None, limit: 200 }, t.clone())));
+        for a in &apps {
+            hs.push(tokio::spawn(query(n.clone(), QueryReq { app: a.clone(), target_prefix: None, before: None, limit: 50 }, t.clone())));
+        }
     }
     let kh = tokio::spawn(keys_audit(200, t.clone()));
     let (mut rows, mut sources) = (Vec::new(), Vec::new());
@@ -117,6 +123,15 @@ async fn round(st: &Shared, tx: &watch::Sender<u64>) {
         rows.extend(r);
         sources.push(s);
     }
+    let mut seen: Vec<Source> = Vec::new();
+    for s in sources {
+        match seen.iter_mut().find(|x| x.cell == s.cell && x.node == s.node) {
+            Some(x) if matches!(x.state, SourceState::Live) => *x = s,
+            Some(_) => {}
+            None => seen.push(s),
+        }
+    }
+    let sources = seen;
     let call = t.root.clone();
     t.finish(CELL, "Round", start, "ok");
     let mut g = st.write().await;

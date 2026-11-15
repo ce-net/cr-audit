@@ -16,7 +16,7 @@ pub const CELL: &str = "cr.audit";
 pub const AUDIT_ABILITIES: &[&str] = &["audit:read"];
 pub const KEYS_ABILITIES: &[&str] = &["keys:audit"];
 pub const MAX: u32 = 500;
-pub const KEEP: usize = 600;
+pub const KEEP: usize = 1200;
 pub const EVERY_S: u64 = 10;
 pub const STREAM_MAX_S: u64 = 30;
 
