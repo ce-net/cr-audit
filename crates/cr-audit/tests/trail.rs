@@ -46,3 +46,12 @@ fn new_rows_are_one_delta() {
     let d = delta(&a, &b, 1).unwrap();
     assert_eq!(d.put.iter().map(|r| r.id.as_str()).collect::<Vec<_>>(), ["n:2"]);
 }
+
+#[test]
+fn source_lines_follow_the_node_and_app_caveats() {
+    let src = |cell: &str, node: &str| Source { cell: cell.into(), node: node.into(), state: SourceState::Live, ms: 0 };
+    let all = vec![src("audit.log", "ops-1"), src("audit.log", "leif-desk"), src("keys", "ops-1")];
+    assert_eq!(sources_for(&caller(&["cr.audit:read"]), all.clone()).len(), 3);
+    let op = sources_for(&caller(&["cr.audit:read", "cr.audit:where:app=orch", "cr.audit:where:node=ops-1"]), all);
+    assert_eq!(op.iter().map(|s| format!("{}@{}", s.cell, s.node)).collect::<Vec<_>>(), ["audit.log@ops-1"]);
+}
